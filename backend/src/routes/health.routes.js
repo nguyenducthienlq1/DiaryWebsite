@@ -7,7 +7,13 @@ const router = express.Router();
 router.get('/health', async (req, res, next) => {
   try {
     await pool.query('SELECT 1');
-    res.json({ success: true, data: { status: 'ok', db: 'connected' } });
+    res.json({ 
+      success: true, 
+      data: { 
+        status: 'ok', 
+        db: 'connected' 
+      } 
+    });
   } catch (err) {
     next(err);
   }

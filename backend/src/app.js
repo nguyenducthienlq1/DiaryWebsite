@@ -5,6 +5,7 @@ const cors = require('cors');
 const cookieParser = require('cookie-parser');
 
 const healthRoutes = require('./routes/health.routes');
+const authRoutes = require('./routes/auth.routes');
 const errorHandler = require('./middlewares/errorHandler');
 
 const app = express();
@@ -18,6 +19,9 @@ app.use(cookieParser());
 
 // Routes — mount thêm auth.routes, entries.routes, tags.routes khi triển khai tiếp
 app.use('/api/v1', healthRoutes);
+
+//Auth routes
+app.use('/api/v1/auth', authRoutes);
 
 // 404 handler
 app.use((req, res) => {

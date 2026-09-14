@@ -1,7 +1,5 @@
 const { Pool } = require('pg');
 
-// Pool đọc cấu hình từ biến môi trường DATABASE_URL
-// Vd: postgresql://user:password@host:5432/diary_db
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   // Railway/Managed Postgres thường yêu cầu SSL ở production
