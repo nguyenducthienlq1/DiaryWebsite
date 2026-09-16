@@ -16,8 +16,21 @@ const loginLimiter = rateLimit({
     },
 });
 
+const registerLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    max: 5,
+    message: {
+        success: false,
+        error: {
+            code: 'TOO_MANY_REQUESTS',
+            message: 'Bạn đã đăng ký quá nhiều lần. Vui lòng thử lại sau 1 phút.',
+        },
+    },
+});
+
 router.post("/login", loginLimiter, authController.login);
-router.post("/refresh-token", authController.refreshToken);
+router.post("/refresh", authController.refreshToken);
 router.post("/logout", authController.logout);
+router.post("/register", registerLimiter, authController.register);
 
 module.exports = router;
