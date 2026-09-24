@@ -28,18 +28,19 @@ cp .env.example .env
 npm run dev   # chạy dev server tại http://localhost:5173
 ```
 
-## Đã implement trong scaffold này
+## Đã implement
 - Cấu trúc thư mục đầy đủ theo `03-architecture.md`
 - Kết nối PostgreSQL (`db/pool.js`) + migration DDL từ `04-erd-schema.md`
 - Crypto utility AES-256-GCM (`utils/crypto.js`)
 - JWT middleware xác thực (`middlewares/authenticate.js`)
 - Error handler chuẩn hóa response (`middlewares/errorHandler.js`)
 - Health check endpoint (`GET /api/v1/health`)
+- Auth API: login, refresh, logout và register
+- Entry API: tạo, danh sách có phân trang/filter/search, xem chi tiết, cập nhật và soft delete
+- Tags API: lấy danh sách tag của người dùng
 - Frontend: routing (react-router), React Query provider, AuthContext, axios client với auto-refresh token
 - Trang Login/EntryList dạng placeholder (chưa nối API thật)
 
-## Chưa implement (bước tiếp theo)
-- `auth.routes/controller/service` — login, refresh, logout thật (theo `05-api-design.md` mục 2)
-- `entries.routes/controller/service/repository` — CRUD + filter/search (mục 3)
-- `tags.routes` (mục 4)
+## Chưa implement
+- API export PDF (`GET /api/v1/entries/export`) theo yêu cầu phạm vi hiện tại
 - Các form/component UI thật thay cho placeholder (theo `06-wireframe.md`)

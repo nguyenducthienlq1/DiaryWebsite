@@ -234,18 +234,15 @@ WHERE id = $1 AND user_id = $2 AND deleted_at IS NULL
 RETURNING id;
 ```
 
-### 5.4 Gắn tag cho entry (dùng trong UC03 — tạo tag nếu chưa có, rồi liên kết)
+### 5.4 Gắn tag cho entry (dùng trong UC03 — kiểm tra tag đã có, rồi liên kết)
 
 ```sql
--- Bước 1: tạo tag nếu chưa tồn tại (upsert)
-INSERT INTO tags (user_id, name)
-VALUES ($1, $2)
-ON CONFLICT (user_id, name) DO UPDATE SET name = EXCLUDED.name
-RETURNING id;
+-- Bước 1: lấy tag đã được tạo riêng bởi user
+SELECT id FROM tags WHERE user_id = $1 AND id = ANY($2::uuid[]);
 
--- Bước 2: liên kết entry với tag
+-- Bước 2: liên kết entry với các tag hợp lệ
 INSERT INTO entry_tags (entry_id, tag_id)
-VALUES ($1, $2)
+SELECT $1, id FROM tags WHERE user_id = $2 AND id = ANY($3::uuid[])
 ON CONFLICT DO NOTHING;
 ```
 

@@ -103,8 +103,6 @@ Hủy refresh token (xóa cookie, có thể thêm blacklist nếu cần).
 { "success": true, "data": null }
 ```
 
----
-
 ## 3. Entries Endpoints
 
 ### POST `/entries`
@@ -116,11 +114,11 @@ Tạo bài viết mới (UC03).
   "title": "Một ngày bình yên",
   "content": "Nội dung nhật ký hôm nay...",
   "entryDate": "2026-09-05",
-  "tags": ["gia đình", "vui"]
+  "tags": ["tag-uuid-1", "tag-uuid-2"]
 }
 ```
 
-**Xử lý ở Service:** encrypt `content` → lưu `content_ciphertext/iv/auth_tag`; upsert từng tag trong `tags`, liên kết `entry_tags`.
+**Xử lý ở Service:** encrypt `content` → lưu `content_ciphertext/iv/auth_tag`; kiểm tra các tag ID đã tồn tại của user rồi liên kết `entry_tags`. Entry không tự tạo tag mới.
 
 **Response 201:**
 ```json
@@ -136,7 +134,7 @@ Tạo bài viết mới (UC03).
   }
 }
 ```
-**Lỗi:** `VALIDATION_ERROR` nếu thiếu `title`/`content`/`entryDate`.
+**Lỗi:** `VALIDATION_ERROR` nếu thiếu `title`/`content`/`entryDate` hoặc tag không tồn tại.
 
 ---
 
@@ -242,7 +240,23 @@ Lấy toàn bộ tag của user hiện tại (phục vụ TagPicker component g�
 }
 ```
 
-> Không cần endpoint `POST /tags` riêng — tag được tạo tự động (upsert) khi tạo/sửa entry, theo đúng luồng UC03 include UC09 đã mô tả ở tài liệu Use Case.
+### POST `/tags`
+Tạo tag riêng trước khi gắn vào bài viết.
+
+**Request body:**
+```json
+{ "name": "gia đình" }
+```
+
+**Response 201:**
+```json
+{
+  "success": true,
+  "data": { "id": "uuid", "name": "gia đình" }
+}
+```
+
+> `POST /entries` và `PUT /entries/:id` chỉ nhận các tag ID đã có từ `POST /tags`. Nếu tag không tồn tại hoặc không thuộc user hiện tại, request bị từ chối.
 
 ---
 
@@ -252,13 +266,14 @@ Lấy toàn bộ tag của user hiện tại (phục vụ TagPicker component g�
 |---|---|---|
 | POST /auth/login | UC01 | — |
 | POST /auth/refresh | UC11 | — |
-| POST /entries | UC03, UC09 | Mục 5.4 |
+| POST /entries | UC03 | Mục 5.4 |
 | GET /entries | UC04, UC08 | Mục 5.1, 5.2 |
 | GET /entries/:id | UC05 | — |
 | PUT /entries/:id | UC06 | — |
 | DELETE /entries/:id | UC07 | Mục 5.3 |
 | GET /entries/export | UC10 | Mục 5.1 (biến thể không phân trang) |
 | GET /tags | UC09 | — |
+| POST /tags | UC09 | — |
 
 ---
 

@@ -14,6 +14,9 @@ function authenticate(req, res, next) {
 
   try {
     const payload = jwt.verify(token, process.env.JWT_ACCESS_SECRET);
+    if (payload.type !== 'access' || !payload.userId) {
+      throw new Error('Invalid access token type');
+    }
     req.userId = payload.userId;
     next();
   } catch (err) {
