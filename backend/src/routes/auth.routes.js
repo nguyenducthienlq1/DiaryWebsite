@@ -32,5 +32,6 @@ router.post("/login", loginLimiter, authController.login);
 router.post("/refresh", authController.refreshToken);
 router.post("/logout", authController.logout);
 router.post("/register", registerLimiter, authController.register);
+router.post("/send-otp", authController.sendOtp);
 
 module.exports = router;

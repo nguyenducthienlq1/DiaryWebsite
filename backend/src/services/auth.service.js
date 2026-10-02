@@ -1,12 +1,13 @@
 const bcrypt = require('bcrypt');
 const userRepository = require('../repositories/user.repository');
+const redis = require('../config/redis');
 const {
-  createAccessToken,
-  createRefreshToken,
-  verifyRefreshToken,
+    createAccessToken,
+    createRefreshToken,
+    verifyRefreshToken,
 } = require('../utils/jwt');
 
-function createAuthError(message){
+function createAuthError(message) {
     const error = new Error(message);
     error.status = 401;
     error.code = 'UNAUTHORIZED';
@@ -14,12 +15,9 @@ function createAuthError(message){
     return error;
 }
 
-function normalizeEmail(email) {
-    return email.trim().toLowerCase();
-}
 
 async function login(email, password) {
-    const user = await userRepository.findByEmail(normalizeEmail(email));
+    const user = await userRepository.findByEmail(email);
     if (!user) {
         throw createAuthError('Email hoặc mật khẩu không đúng');
     }
@@ -30,18 +28,32 @@ async function login(email, password) {
     return {
         accessToken: createAccessToken(user.id),
         refreshToken: createRefreshToken(user.id),
-        user:{
+        user: {
             id: user.id,
             email: user.email,
             displayName: user.displayName,
         },
     };
 }
-async function register(email, password, displayName){
-    const normalizedEmail = normalizeEmail(email);
+async function register(email, password, displayName, otp) {
     const normalizedDisplayName = displayName.trim();
 
-    if (!/^\S+@\S+\.\S+$/.test(normalizedEmail)) {
+    const cachedOtp = await redis.get(`otp:register:${email}`);
+    if (!cachedOtp || cachedOtp !== otp) {
+        const error = new Error('Mã OTP không hợp lệ hoặc đã hết hạn');
+        error.status = 400;
+        error.code = 'VALIDATION_ERROR';
+        error.expose = true;
+        throw error;
+    }
+    if (cachedOtp !== otp) {
+        const error = new Error('Mã OTP không hợp lệ');
+        error.status = 400;
+        error.code = 'VALIDATION_ERROR';
+        error.expose = true;
+        throw error;
+    }
+    if (!/^\S+@\S+\.\S+$/.test(email)) {
         const error = new Error('Email không hợp lệ');
         error.status = 400;
         error.code = 'VALIDATION_ERROR';
@@ -64,8 +76,7 @@ async function register(email, password, displayName){
         error.expose = true;
         throw error;
     }
-
-    const existingUser = await userRepository.findByEmail(normalizedEmail);
+    const existingUser = await userRepository.findByEmail(email);
     if (existingUser) {
         const error = new Error('Email đã được sử dụng');
         error.status = 409;
@@ -77,7 +88,7 @@ async function register(email, password, displayName){
     let newUser;
     try {
         newUser = await userRepository.createUser(
-            normalizedEmail,
+            email,
             hashedPassword,
             normalizedDisplayName
         );
@@ -92,15 +103,16 @@ async function register(email, password, displayName){
         }
         throw error;
     }
-
+    redis.del(`otp:register:${email}`);
     return {
-        newUser:{
+        newUser: {
             id: newUser.id,
             email: newUser.email,
             displayName: newUser.displayName,
         }
     }
 }
+
 async function refreshToken(refreshToken) {
     if (!refreshToken) {
         throw createAuthError('Refresh token không được để trống');
