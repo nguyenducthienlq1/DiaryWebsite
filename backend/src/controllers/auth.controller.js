@@ -35,6 +35,31 @@ async function login(req, res, next) {
         next(error);
     }
 }
+async function googleLogin(req, res, next) {
+    try {
+        const { idToken } = req.body || {};
+        if (typeof idToken !== 'string' || !idToken.trim()) {
+            return res.status(400).json({
+                success: false,
+                error: {
+                    code: 'VALIDATION_ERROR',
+                    message: 'ID Token là bắt buộc',
+                },
+            });
+        }
+        const result = await authService.googleLogin(idToken);
+        res.cookie('refreshToken', result.refreshToken, cookieOptions);
+        res.status(200).json({
+            success: true,
+            data: {
+                accessToken: result.accessToken,
+                user: result.user,
+            },
+        });
+    } catch (error) {
+        next(error);
+    }
+}
 async function sendOtp(req, res, next) {
     try {
         const { email } = req.body || {};
@@ -47,7 +72,7 @@ async function sendOtp(req, res, next) {
                 },
             });
         }
-        
+
 
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
         await redis.set(`otp:register:${email}`, otp, 'EX', 300);
@@ -118,4 +143,5 @@ module.exports = {
     refreshToken,
     logout,
     sendOtp,
+    googleLogin,
 };

@@ -33,5 +33,6 @@ router.post("/refresh", authController.refreshToken);
 router.post("/logout", authController.logout);
 router.post("/register", registerLimiter, authController.register);
 router.post("/send-otp", authController.sendOtp);
+router.post("/google-login", loginLimiter, authController.googleLogin);
 
 module.exports = router;

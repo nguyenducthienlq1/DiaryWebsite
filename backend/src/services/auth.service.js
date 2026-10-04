@@ -1,4 +1,5 @@
 const bcrypt = require('bcrypt');
+const googleAuth = require('google-auth-library');
 const userRepository = require('../repositories/user.repository');
 const redis = require('../config/redis');
 const {
@@ -13,6 +14,34 @@ function createAuthError(message) {
     error.code = 'UNAUTHORIZED';
     error.expose = true;
     return error;
+}
+
+function createGoogleAuthError() {
+    const error = new Error('Google ID Token không hợp lệ hoặc email chưa được xác minh');
+    error.status = 401;
+    error.code = 'INVALID_GOOGLE_TOKEN';
+    error.expose = true;
+    return error;
+}
+
+function createGoogleAccountConflictError() {
+    const error = new Error('Email đã có tài khoản. Hãy đăng nhập tài khoản hiện tại để liên kết Google');
+    error.status = 409;
+    error.code = 'ACCOUNT_LINK_REQUIRED';
+    error.expose = true;
+    return error;
+}
+
+function createGoogleSession(user) {
+    return {
+        accessToken: createAccessToken(user.id),
+        refreshToken: createRefreshToken(user.id),
+        user: {
+            id: user.id,
+            email: user.email,
+            displayName: user.displayName,
+        },
+    };
 }
 
 
@@ -34,6 +63,62 @@ async function login(email, password) {
             displayName: user.displayName,
         },
     };
+}
+async function googleLogin(idToken) {
+    const googleClientId = process.env.GOOGLE_CLIENT_ID;
+    if (!googleClientId) {
+        throw new Error('GOOGLE_CLIENT_ID chưa được cấu hình');
+    }
+
+    const client = new googleAuth.OAuth2Client(googleClientId);
+    let ticket;
+    try {
+        ticket = await client.verifyIdToken({
+            idToken,
+            audience: googleClientId,
+        });
+    } catch (error) {
+        throw createGoogleAuthError();
+    }
+
+    const payload = ticket.getPayload();
+    if (!payload || !payload.sub || !payload.email || payload.email_verified !== true) {
+        throw createGoogleAuthError();
+    }
+
+    const googleSub = payload.sub;
+    const email = payload.email.trim().toLowerCase();
+    const displayName = (payload.name || email.split('@')[0]).trim().slice(0, 100);
+    const user = await userRepository.findByGoogleSub(googleSub);
+    if (user) {
+        return createGoogleSession(user);
+    }
+
+    const existingUser = await userRepository.findByEmail(email);
+    if (existingUser) {
+        throw createGoogleAccountConflictError();
+    }
+
+    try {
+        const newUser = await userRepository.createUser(
+            email,
+            null,
+            displayName,
+            googleSub
+        );
+        return createGoogleSession(newUser);
+    } catch (error) {
+        if (error.code !== '23505') {
+            throw error;
+        }
+
+        const concurrentlyCreatedUser = await userRepository.findByGoogleSub(googleSub);
+        if (concurrentlyCreatedUser) {
+            return createGoogleSession(concurrentlyCreatedUser);
+        }
+
+        throw createGoogleAccountConflictError();
+    }
 }
 async function register(email, password, displayName, otp) {
     const normalizedDisplayName = displayName.trim();
@@ -131,4 +216,5 @@ module.exports = {
     login,
     register,
     refreshToken,
+    googleLogin,
 }; 
