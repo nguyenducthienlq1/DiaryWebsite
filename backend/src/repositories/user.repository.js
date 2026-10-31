@@ -15,6 +15,20 @@ async function findByEmail(email) {
     );
     return result.rows[0] || null;
 }
+async function findById(id) {
+    const result = await pool.query(
+        `
+        SELECT
+            id,
+            email,
+            display_name AS "displayName"
+        FROM users
+        WHERE id = $1
+        `,
+        [id]
+    );
+    return result.rows[0] || null;
+}
 async function findByGoogleSub(googleSub) {
     const result = await pool.query(
         `
@@ -45,6 +59,7 @@ async function createUser(email, passwordHash, displayName, googleSub = null) {
 }
 module.exports = {
     findByEmail,
+    findById,
     findByGoogleSub,
     createUser,
 };

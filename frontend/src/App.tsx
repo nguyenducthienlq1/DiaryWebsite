@@ -1,25 +1,35 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from './context/AuthContext';
 import LoginPage from './pages/LoginPage';
 import EntryListPage from './pages/EntryListPage';
+import WelcomePage from './pages/WelcomePage';
+import ProtectedRoute from './routes/ProtectedRoute';
+import RegisterPage from './pages/RegisterPage';
 
 const queryClient = new QueryClient();
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <BrowserRouter>
+    <BrowserRouter>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
           <Routes>
             <Route path="/login" element={<LoginPage />} />
-            <Route path="/" element={<EntryListPage />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
-            {/* TODO: thêm route /entries/:id, /entries/new, /entries/:id/edit */}
+            <Route path="/register" element={<RegisterPage />} />
+            <Route
+              path="/entry"
+              element={
+                <ProtectedRoute>
+                  <EntryListPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route path="/" element={<WelcomePage />} />
           </Routes>
-        </BrowserRouter>
-      </AuthProvider>
-    </QueryClientProvider>
+        </AuthProvider>
+      </QueryClientProvider>
+    </BrowserRouter>
   );
 }
 

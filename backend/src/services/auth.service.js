@@ -8,10 +8,10 @@ const {
     verifyRefreshToken,
 } = require('../utils/jwt');
 
-function createAuthError(message) {
+function createAuthError(message, code = 'UNAUTHORIZED') {
     const error = new Error(message);
     error.status = 401;
-    error.code = 'UNAUTHORIZED';
+    error.code = code;
     error.expose = true;
     return error;
 }
@@ -50,6 +50,12 @@ async function login(email, password) {
     if (!user) {
         throw createAuthError('Email hoặc mật khẩu không đúng');
     }
+    if (user.passwordHash === null) {
+        throw createAuthError(
+            'Tài khoản này đã được đăng ký bằng Google. Vui lòng đăng nhập bằng Google',
+            'GOOGLE_ACCOUNT_PASSWORD_LOGIN'
+        );
+    }
     const passwordMatched = await bcrypt.compare(password, user.passwordHash);
     if (!passwordMatched) {
         throw createAuthError('Email hoặc mật khẩu không đúng');
@@ -62,6 +68,17 @@ async function login(email, password) {
             email: user.email,
             displayName: user.displayName,
         },
+    };
+}
+async function getCurrentUser(userId) {
+    const user = await userRepository.findById(userId);
+    if (!user) {
+        throw createAuthError('Phiên đăng nhập không hợp lệ');
+    }
+    return {
+        id: user.id,
+        email: user.email,
+        displayName: user.displayName,
     };
 }
 async function googleLogin(idToken) {
@@ -120,7 +137,7 @@ async function googleLogin(idToken) {
         throw createGoogleAccountConflictError();
     }
 }
-async function register(email, password, displayName, otp) {
+async function register(email, password, confirmPassword, displayName, otp) {
     const normalizedDisplayName = displayName.trim();
 
     const cachedOtp = await redis.get(`otp:register:${email}`);
@@ -148,6 +165,14 @@ async function register(email, password, displayName, otp) {
 
     if (password.length < 8) {
         const error = new Error('Mật khẩu phải có ít nhất 8 ký tự');
+        error.status = 400;
+        error.code = 'VALIDATION_ERROR';
+        error.expose = true;
+        throw error;
+    }
+
+    if (password !== confirmPassword) {
+        const error = new Error('Mật khẩu và xác nhận mật khẩu không khớp');
         error.status = 400;
         error.code = 'VALIDATION_ERROR';
         error.expose = true;
@@ -214,6 +239,7 @@ async function refreshToken(refreshToken) {
 }
 module.exports = {
     login,
+    getCurrentUser,
     register,
     refreshToken,
     googleLogin,

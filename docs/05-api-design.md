@@ -73,7 +73,7 @@
   }
 }
 ```
-> Response Header: `Set-Cookie: refreshToken=...; HttpOnly; Secure; SameSite=Strict`
+> Response Header: `Set-Cookie: refreshToken=...; HttpOnly; SameSite=Strict`; `Secure` được bật ở production.
 
 **Lỗi:** `401 UNAUTHORIZED` nếu email/password sai.
 
@@ -94,6 +94,27 @@ Cấp lại access token từ refresh token cookie.
 **Lỗi:** `401 UNAUTHORIZED` nếu refresh token hết hạn/không hợp lệ → frontend redirect về Login.
 
 ---
+
+### GET `/auth/me`
+Trả về hồ sơ của user gắn với access token hiện tại. Frontend gọi endpoint này sau `POST /auth/refresh` để khôi phục user sau khi tải lại trang.
+
+| | |
+|---|---|
+| Auth required | Header `Authorization: Bearer <accessToken>` |
+
+**Response 200:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "uuid",
+    "email": "user@example.com",
+    "displayName": "Mẹ"
+  }
+}
+```
+
+**Lỗi:** `401 UNAUTHORIZED` nếu access token không hợp lệ/hết hạn hoặc user không còn tồn tại.
 
 ### POST `/auth/logout`
 Hủy refresh token (xóa cookie, có thể thêm blacklist nếu cần).
@@ -265,6 +286,7 @@ Tạo tag riêng trước khi gắn vào bài viết.
 | Endpoint | Use Case | Query tham chiếu (04-erd-schema.md) |
 |---|---|---|
 | POST /auth/login | UC01 | — |
+| GET /auth/me | Khôi phục phiên sau khi tải lại trang | — |
 | POST /auth/refresh | UC11 | — |
 | POST /entries | UC03 | Mục 5.4 |
 | GET /entries | UC04, UC08 | Mục 5.1, 5.2 |

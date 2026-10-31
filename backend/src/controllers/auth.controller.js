@@ -2,6 +2,18 @@ const authService = require('../services/auth.service');
 const emailService = require('../services/email.service');
 const redis = require('../config/redis');
 
+async function getCurrentUser(req, res, next) {
+    try {
+        const user = await authService.getCurrentUser(req.userId);
+        res.status(200).json({
+            success: true,
+            data: user,
+        });
+    } catch (error) {
+        next(error);
+    }
+}
+
 const cookieOptions = {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
@@ -90,9 +102,9 @@ async function sendOtp(req, res, next) {
 }
 async function register(req, res, next) {
     try {
-        const { email, password, displayName, otp } = req.body || {};
-        if (typeof email !== 'string' || typeof password !== 'string' || typeof displayName !== 'string' || typeof otp !== 'string' ||
-            !email.trim() || !password || !displayName.trim() || !otp.trim()) {
+        const { email, password, confirmPassword, displayName, otp } = req.body || {};
+        if (typeof email !== 'string' || typeof password !== 'string' || typeof confirmPassword !== 'string' || typeof displayName !== 'string' || typeof otp !== 'string' ||
+            !email.trim() || !password || !confirmPassword || password !== confirmPassword || !displayName.trim() || !otp.trim()) {
             return res.status(400).json({
                 success: false,
                 error: {
@@ -102,7 +114,7 @@ async function register(req, res, next) {
             });
         }
 
-        const result = await authService.register(email, password, displayName, otp);
+        const result = await authService.register(email, password, confirmPassword, displayName, otp);
 
         res.status(201).json({
             success: true,
@@ -139,6 +151,7 @@ function logout(req, res) {
 
 module.exports = {
     login,
+    getCurrentUser,
     register,
     refreshToken,
     logout,
