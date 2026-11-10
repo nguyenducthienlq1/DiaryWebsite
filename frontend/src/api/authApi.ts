@@ -1,6 +1,5 @@
 import { apiClient } from './client';
 import type {
-  ApiSuccessResponse,
   LoginRequest,
   LoginResponse,
   RefreshTokenResponse,
@@ -8,6 +7,7 @@ import type {
   RegisterResponse,
   RegisterRequest,
 } from '../types/auth';
+import type {ApiSuccessResponse} from "../types/api";
 
 export async function login(
   request: LoginRequest,

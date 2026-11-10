@@ -3,12 +3,13 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from './context/AuthContext';
 import LoginPage from './pages/LoginPage';
 import EntryListPage from './pages/EntryListPage';
+import CreateEntryPage from './pages/CreateEntryPage';
 import WelcomePage from './pages/WelcomePage';
 import ProtectedRoute from './routes/ProtectedRoute';
 import RegisterPage from './pages/RegisterPage';
+import { Toaster } from 'sonner';
 
 const queryClient = new QueryClient();
-
 function App() {
   return (
     <BrowserRouter>
@@ -25,8 +26,17 @@ function App() {
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/entry/create"
+              element={
+                <ProtectedRoute>
+                  <CreateEntryPage />
+                </ProtectedRoute>
+              }
+            />
             <Route path="/" element={<WelcomePage />} />
           </Routes>
+          <Toaster position="top-center" richColors />
         </AuthProvider>
       </QueryClientProvider>
     </BrowserRouter>

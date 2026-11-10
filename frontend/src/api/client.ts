@@ -3,9 +3,9 @@ import axios, {
   type InternalAxiosRequestConfig,
 } from 'axios';
 import type {
-  ApiSuccessResponse,
   RefreshTokenResponse,
 } from '../types/auth';
+import type { ApiSuccessResponse } from '../types/api';
 import {
   clearAccessToken,
   getAccessToken,

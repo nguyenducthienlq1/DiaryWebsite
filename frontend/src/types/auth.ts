@@ -22,18 +22,7 @@ export interface RefreshTokenResponse {
   accessToken: string;
 }
 
-export interface ApiSuccessResponse<T> {
-  success: true;
-  data: T;
-}
 
-export interface ApiErrorResponse {
-  success: false;
-  error: {
-    code: string;
-    message: string;
-  };
-}
 
 export interface RegisterRequest {
   email: string;
