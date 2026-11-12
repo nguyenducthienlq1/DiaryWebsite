@@ -1,13 +1,32 @@
+import { useEffect } from 'react';
 import AppHeader from '../components/AppHeader';
 import Entry from '../components/DiaryEntry';
-import { Link } from 'react-router-dom';
-import { useDiary } from '../hooks/useDiary';
+import Pagination from '../components/Pagination';
+import { Link, useLocation, useSearchParams } from 'react-router-dom';
+import { useDiary } from '../hooks/useListDiary';
+
+const PAGE_SIZE = 6;
 
 export default function EntryListPage() {
-  const { entries, isLoading, loadError, reload } = useDiary();
+  const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const page = Math.max(1, Math.floor(Number(searchParams.get('page'))) || 1);
+
+  const { entries, meta, isLoading, isFetching, loadError, reload } = useDiary(page, PAGE_SIZE);
+
+  function goToPage(next: number) {
+    setSearchParams(next === 1 ? {} : { page: String(next) });
+    window.scrollTo({ top: 0 });
+  }
+
+  useEffect(() => {
+    if (meta && meta.totalPages > 0 && page > meta.totalPages) {
+      setSearchParams({ page: String(meta.totalPages) }, { replace: true });
+    }
+  }, [meta, page, setSearchParams]);
 
   return (
-    <main className="mx-auto min-h-screen max-w-3xl px-4 py-6 sm:px-6">
+    <main className="mx-auto min-h-screen max-w-5xl px-4 py-6 sm:px-6">
       <AppHeader />
       <section>
         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -43,11 +62,28 @@ export default function EntryListPage() {
             Chưa có bài viết nào. Hãy tạo nhật ký đầu tiên của bạn.
           </p>
         ) : (
-          <section aria-label="Danh sách nhật ký" className="mt-6 grid grid-cols-1 gap-4">
+          <section aria-label="Danh sách nhật ký" className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {entries.map((entry) => (
-              <Entry entry={entry} key={entry.id} />
+              <Link
+                key={entry.id}
+                to={`/entry/${entry.id}`}
+                // location.search đã có sẵn dấu "?" ở đầu (ví dụ "?page=2"), nên không thêm "?" nữa
+                state={{ backTo: `/entry${location.search}` }}
+                className="block h-full rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+              >
+                <Entry entry={entry} />
+              </Link>
             ))}
           </section>
+        )}
+
+        {!isLoading && !loadError && meta && meta.total > 0 && (
+          <Pagination
+            page={page}
+            totalPages={meta.totalPages}
+            onPageChange={goToPage}
+            disabled={isFetching}
+          />
         )}
       </section>
     </main>

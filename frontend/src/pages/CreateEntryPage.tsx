@@ -2,8 +2,9 @@ import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import AppHeader from '../components/AppHeader';
-import { useDiary } from '../hooks/useDiary';
+import { useDiary } from '../hooks/useListDiary';
 import type { CreateDiaryEntryRequest } from '../types/diary_entry';
+import EntryDetail from '../components/EntryDetail';
 
 function getTodayDate(): string {
     const today = new Date();
@@ -19,6 +20,7 @@ export default function CreateEntryPage() {
     const [content, setContent] = useState('');
     const [entryDate, setEntryDate] = useState(getTodayDate);
     const [validationError, setValidationError] = useState('');
+    const isPending = isCreating;
 
     function handleSubmit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
@@ -53,7 +55,7 @@ export default function CreateEntryPage() {
                     to="/entry"
                 >
                     ← Quay lại danh sách
-                </Link> 
+                </Link>
                 <h1 className="mt-4 text-2xl font-semibold text-stone-900">
                     Tạo nhật ký mới
                 </h1>
@@ -62,84 +64,29 @@ export default function CreateEntryPage() {
                 </p>
 
                 <form
-                    className="mt-6 space-y-5 rounded-xl border border-stone-200 bg-white p-5 shadow-sm"
+                    className="mt-6 space-y-4"
                     onSubmit={handleSubmit}
                 >
-                    <div>
-                        <label
-                            className="mb-1.5 block text-sm font-medium text-stone-700"
-                            htmlFor="entry-title"
-                        >
-                            Tiêu đề
-                        </label>
-                        <input
-                            autoFocus
-                            className="w-full rounded-lg border border-stone-300 px-3 py-2.5 text-stone-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-stone-50"
-                            disabled={isCreating}
-                            id="entry-title"
-                            maxLength={255}
-                            onChange={(event) => setTitle(event.target.value)}
-                            placeholder="Ví dụ: Một ngày bình yên"
-                            required
-                            value={title}
-                        />
-                    </div>
-                    <div>
-                        <label
-                            className="mb-1.5 block text-sm font-medium text-stone-700"
-                            htmlFor="entry-date"
-                        >
-                            Ngày viết
-                        </label>
-                        <input
-                            className="w-full rounded-lg border border-stone-300 px-3 py-2.5 text-stone-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-stone-50"
-                            disabled={isCreating}
-                            id="entry-date"
-                            onChange={(event) => setEntryDate(event.target.value)}
-                            required
-                            type="date"
-                            value={entryDate}
-                        />
-                    </div>
-                    <div>
-                        <label
-                            className="mb-1.5 block text-sm font-medium text-stone-700"
-                            htmlFor="entry-content"
-                        >
-                            Nội dung
-                        </label>
-                        <textarea
-                            className="min-h-40 w-full resize-y rounded-lg border border-stone-300 px-3 py-2.5 text-stone-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-stone-50"
-                            disabled={isCreating}
-                            id="entry-content"
-                            onChange={(event) => setContent(event.target.value)}
-                            placeholder="Hôm nay của bạn thế nào?"
-                            required
-                            value={content}
-                        />
-                    </div>
-
+                    <EntryDetail
+                        content={content}
+                        disabled={isPending}
+                        entryDate={entryDate}
+                        onContentChange={setContent}
+                        onEntryDateChange={setEntryDate}
+                        onTitleChange={setTitle}
+                        title={title}
+                    />
                     {(validationError || createError) && (
                         <p className="text-sm text-red-700" role="alert">
                             {validationError || createError}
                         </p>
                     )}
-
                     <div className="flex justify-end gap-3">
-                        <button
-                            className="rounded-lg border border-stone-300 px-4 py-2.5 text-sm font-medium text-stone-700 transition hover:bg-stone-50 disabled:opacity-60"
-                            disabled={isCreating}
-                            onClick={() => navigate('/entry')}
-                            type="button"
-                        >
+                        <button className="rounded-md bg-red-500 px-4 py-2 text-sm font-medium text-white hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50" type="button" onClick={() => navigate('/entry')} disabled={isPending}>
                             Hủy
                         </button>
-                        <button
-                            className="rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-wait disabled:opacity-60"
-                            disabled={isCreating}
-                            type="submit"
-                        >
-                            {isCreating ? 'Đang lưu…' : 'Lưu nhật ký'}
+                        <button className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50" type="submit" disabled={isPending}>
+                            {isPending ? 'Đang lưu…' : 'Lưu thay đổi'}
                         </button>
                     </div>
                 </form>

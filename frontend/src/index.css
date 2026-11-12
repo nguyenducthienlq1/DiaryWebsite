@@ -1,1 +1,11 @@
 @import "tailwindcss";
+
+.entry-detail-lines {
+    background-image: repeating-linear-gradient(to bottom,
+            transparent 0,
+            transparent 31px,
+            #d6d3d1 31px,
+            #d6d3d1 32px);
+    background-position: 100% 32px;
+    background-size: 100% 32px;
+}

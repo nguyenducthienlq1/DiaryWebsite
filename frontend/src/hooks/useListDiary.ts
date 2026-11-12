@@ -16,11 +16,12 @@ function getErrorMessage(error: unknown): string {
   return 'Đã xảy ra lỗi không xác định. Vui lòng thử lại.';
 }
 
-export function useDiary() {
+export function useDiary(page = 1, limit = 6) {
   const queryClient = useQueryClient();
   const entriesQuery = useQuery({
-    queryKey: ['diaryEntries'],
-    queryFn: diaryApi.getDiaryEntries,
+    queryKey: ['diaryEntries', page, limit],
+    queryFn: () => diaryApi.getDiaryEntries(page, limit),
+    placeholderData: (previousData) => previousData,
   });
   const createMutation = useMutation({
     mutationFn: diaryApi.createDiaryEntry,
@@ -29,8 +30,10 @@ export function useDiary() {
   });
 
   return {
-    entries: entriesQuery.data ?? [],
+    entries: entriesQuery.data?.entries ?? [],
+    meta: entriesQuery.data?.meta,
     isLoading: entriesQuery.isLoading,
+    isFetching: entriesQuery.isFetching,
     loadError: entriesQuery.error ? getErrorMessage(entriesQuery.error) : null,
     reload: entriesQuery.refetch,
     createDiaryEntry: createMutation.mutate,

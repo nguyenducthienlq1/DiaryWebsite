@@ -7,6 +7,7 @@ import CreateEntryPage from './pages/CreateEntryPage';
 import WelcomePage from './pages/WelcomePage';
 import ProtectedRoute from './routes/ProtectedRoute';
 import RegisterPage from './pages/RegisterPage';
+import EntryDetailPage from './pages/EntryDetailPage';
 import { Toaster } from 'sonner';
 
 const queryClient = new QueryClient();
@@ -18,19 +19,25 @@ function App() {
           <Routes>
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
-            <Route
-              path="/entry"
-              element={
-                <ProtectedRoute>
-                  <EntryListPage />
-                </ProtectedRoute>
-              }
+            <Route path="/entry" element={
+              <ProtectedRoute>
+                <EntryListPage />
+              </ProtectedRoute>
+            }
             />
             <Route
               path="/entry/create"
               element={
                 <ProtectedRoute>
                   <CreateEntryPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/entry/:id"
+              element={
+                <ProtectedRoute>
+                  <EntryDetailPage />
                 </ProtectedRoute>
               }
             />
